@@ -1,0 +1,298 @@
+https://www.youtube.com/watch?v=2XRdgame3sc - курсы
+https://www.youtube.com/watch?v=LNvmI8a9jwY - extra
+Различные две программы клиенты для работы с MongoDB: Robo 3T и Compass.
+Залить dump:
+ 1. В robo 3T правой кнопкой на названии connection
+ 2. Из контекстного меню Create Database, задаем имя БД
+В MongoDB коллекции вместо табличек
+ 3. Правой кнопкой мыши на названии БД
+ 4. Нажимаем Open Shell
+ 5. Вставляем в Shell dump и жмем ctrl+enter
+
+ Существует 3 вида отображения информации в robo 3t: объектный, табличный, JSON
+
+ Mongo хранит данные в BSON - бинарный JSON с 0 и 1
+
+ Mongo намного быстрее чем MySQL
+
+ Mongo написана на JS
+
+ Mongo чувствительна к регистру
+
+ use test - в compass или robo 3T для открытия БД. Если ее нет с таким именем, то она создасться или клик на БД в robo 3T
+
+ db.createCollection("users")
+ {ok: 1}  - создание коллекции
+
+ show collections - показать коллекции
+
+ db.dropDatabase - удаление БД
+
+
+db.getCollection('users').insert({car: 'BMw', year: 200}) - добавит два столбца (поля) в коллекцию users
+
+db.getCollection('users').find({gender: 'female'}) - поиск с gender = female (вывод всех элементов таблицы, у которых в столбце gender задано значение female)
+ИЛИ
+db.users.find({gender: 'female'})
+
+db.getCollection('users').find({_id: ObjectId('61c81fd141628f7b2ec25b5f')}) - поиск по id (id - это объект, обязательно оборачиваем запрос в ObjectId()) //для одно элемента лучше findOne
+
+db.getCollection('users').find(   - задает определенную выборку (1 - true, 0 - false)
+{gender: 'female'},
+{name:true, age: 1, parents: 1}
+)
+
+db.getCollection('users').find(  - задает выборку с ИЛИ (OR)
+    {
+    $or:[
+        {rating: 3},
+        {rating: 2},
+        {rating: 5},
+        {name: 'Sergii'}
+        ]
+    }
+)
+
+db.getCollection('users').find(  - задает выборку с in для поля
+    {
+ age: {$in:[12,16,26]}
+    }
+)
+
+db.getCollection('users').find(  - задает выборку с not in для поля
+    {
+ age: {$nin:[12,16,26]}
+    }
+)
+
+db.getCollection('users').find(  - regexp - все юзеры у которых имя начинается на А
+    {
+ name: /^A/
+    }
+)
+
+db.getCollection('users').find( - regexp - все юзеры у которых в имени вторая буква а;    i  - убирает чувстительность к регистру
+    {
+ name: /^.A/i
+    }
+)
+
+db.getCollection('users').find( - regexp - все юзеры у которых имя заканчивается на r; r независит от регистра
+    {
+ name: /r$/i
+    }
+)
+
+db.getCollection('users').find( - regexp - все юзеры у которых  в  имени есть в любой позиции буква а; a независит от регистра
+    {
+ name: /.*a.*/i
+    }
+)
+
+db.getCollection('users').find( - regexp - все юзеры у которых  в  имени на 3 позиции буква t; t независит от регистра; ^.{2} - 2 любых символа вначеле имени;
+    {
+ name: /^.{2}t/i
+    }
+)
+
+db.getCollection('users').find( - все юзеры с отсутствием поля name или заданным значением поля name: null
+    {
+ name: null
+    }
+)
+
+db.getCollection('users').find( -  regexp - все юзеры у которых в поле name есть первая буква k и последняя a
+    {
+ name: /^k.*a/i
+    }
+)
+
+db.getCollection('users').find( - -  regexp - все юзеры у которых в поле name есть буква a, кроме первой и последней
+    {
+ name: /^.{1}.*a.*.{1}$/i
+    }
+)
+ИЛИ
+db.getCollection('users').find(
+    {
+ name: /^..*a.*.$/i
+    }
+)
+
+db.getCollection('users').find().sort({rating:1}) - сортировка по рейтингу (asc - 1, desc - -1)
+
+db.getCollection('users').find().sort({rating: 1, age: -1}) - две сортировки (по rating и age)
+
+db.getCollection('users').find().sort({rating:1, age: -1}).limit(2).skip(1) - две сортировки (по rating и age) c ограничением по выводу 2 - limit(2) и пропуском 1 - skip(1) (offset в MySQL)
+
+db.getCollection('users').find( - все юзеры у которых рейтинг > 3
+    {rating:{$gt: 3}}
+)
+
+db.getCollection('users').find( - все юзеры у которых рейтинг >= 3
+    {rating:{$gte: 3}}
+)
+
+db.getCollection('users').find( - все юзеры у которых рейтинг < 3
+    {rating:{$lt: 3}}
+)
+
+db.getCollection('users').find( - все юзеры у которых рейтинг <= 3
+    {rating:{$lte: 3}}
+)
+
+db.getCollection('users').find(  - все юзеры у которых рейтинг != 3
+    {rating:{$ne: 3}}
+)
+
+db.getCollection('users').find( - все юзеры у которых рейтинг == 3
+    {rating:{$eq: 3}}
+)
+
+db.getCollection('users').update( - заменяет полностью первый элемент с найденным полем gender = 'male' на  gender = 'animal', все остальные поля этого элемента затирает //лучше использовать updateOne или updateMany, если много элементово
+{gender: 'male'},
+{gender: 'animal'}
+)
+
+db.getCollection('users').update( - заменяет первый элемент с найденным полем gender = 'male' на  gender = 'animal', все остальные поля этого элемента оставляет неизменными
+{gender: 'male'},
+{$set:{gender: 'animal'}}
+)
+
+db.getCollection('users').updateMany( - произойдет изменение названия поля name на fullname
+{},
+{
+$rename:{
+name: 'fullname'
+}
+)
+
+db.getCollection('users').updateMany( - заменяет все элементы с найденным полем gender = 'male' на  gender = 'animal', все остальные поля этого элемента оставляет неизменными
+{gender: 'male'},
+{$set:{gender: 'animal'}}
+)
+
+db.getCollection('users').find( - выводит все элементы у которых есть поле parents и длина массива 2 (arrParents.length ===2)
+{
+    parents:{$size:2}
+ }
+ )
+
+ db.getCollection('users').find( - выводит все элементы у которых нет поля parents
+ {
+     parents:null
+  }
+  )
+  ИЛИ
+  db.getCollection('users').find(
+  {
+      parents:{$exists: 0}
+   }
+   )
+
+   db.getCollection('users').find( - выводит все элементы у которых есть поле parents
+   {
+       parents:{$exists: 1}
+    }
+    )
+
+    db.getCollection('users').updateMany( - заменяет во всех элементах с полем parents элементы поля parents на 'Somename' (Имена родителей меняем на Somename)
+    {parents: {$exists: 1}},
+    {$set: {'parents.$[]':'Somename'}}
+    )
+
+    db.getCollection('users').update( - заменяет у 1 элемента по id на поле parents с 3 определенными родителями
+    {_id: ObjectId("61c81fd141628f7b2ec25b61")},
+    {$set: {parents:[{father:{name: 'Kiril', age: 78}}, {father:{name: 'Leha', age: 87}}, {mother:{name: 'Anna', age: 75}}]}}
+    )
+
+   Удаление коллекции - В Robo 3T правый клик на коллекции, нажимаем Drop Collection
+
+
+   db.getCollection('users').find( - найти элементы у которых есть parents равный 'Masha'
+   {
+       parents: 'Masha'
+   }
+   )
+
+   db.getCollection('users').find(  - найти элементы у которых есть parents.father.name === 'Kiril'
+   {
+       'parents.father.name': 'Kiril'
+   }
+   )
+
+   db.getCollection('users').find(  - найти элементы у которых есть address.city === 'Odessa'
+   {
+       'address.city': 'Odessa'
+   }
+   )
+
+   db.getCollection('users').find( - найти элементы у которых есть parents и второй элемент(т.к. 1) father.name === 'Leha'
+   {
+       'parents.1.father.name': 'Leha'
+   }
+   )
+
+   db.getCollection('users').update(   - добавляем новый элемент 'Pasha' в массив parents для заданного элемента по id
+   {_id: ObjectId("61c81fd141628f7b2ec25b61")},
+   {$push: {parents: 'Pasha'}}
+   )
+
+   db.getCollection('users').update( - удаляет элемент 'Pasha' из массива parents для заданного элемента по id
+   {_id: ObjectId("61c81fd141628f7b2ec25b61")},
+   {$pull: {parents: 'Pasha'}}
+   )
+
+   db.getCollection('users').remove({_id: ObjectId("61c81fd141628f7b2ec25b61")}) - удаляет определенного юзера по id
+
+   db.users.deleteOne({age:24}) - удаляет одного юзера по с age = 24
+
+   для добавления элементов используем insertMany
+   db.getCollection('users').insertMany( //в compass: db.users.insertMany(...) // для одного insertOne
+   {...},
+   {...},
+   {...}
+   )
+
+   db.users.bulkWrite( - вставка и удаление в одном запросе
+   {
+   insertOne: {
+   document: {name: "nastya", age:18}
+   }
+   },
+  {
+  deleteOne: {
+  filter: {name: 'petya'}
+  }
+  }
+   )
+
+   db.users.update( - связь один ко многим
+   {fullname: 'petya'},
+   {
+        $set: {
+            posts: [
+                {title: 'javascript', text: 'js top'},
+                {title: 'mongo', text: 'mongo database'}
+            ]
+        }
+   }
+   )
+
+   db.users.findOne (   - только посты данного пользователя
+        {fullname: 'petya'},
+        {posta: 1}
+   )
+
+
+      db.users.find (   - ищем пользователя у которого есть title = "javascript"
+           {
+                posts: {
+                    $elemMatch: {
+                    title: "javascript"
+                    }
+                }
+           }
+      )
+
+      db.users.find({posts: {$exists: true}}) - ищем элементы у которых есть поле posts

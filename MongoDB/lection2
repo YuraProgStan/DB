@@ -1,0 +1,286 @@
+https://www.youtube.com/watch?v=l1Qc_yprkPY
+https://docs.mongodb.com/manual/reference/operator/aggregation/
+
+Агрегация - функция, которая принимает массив
+db.getCollection('teacher').aggregate([
+{},
+{},
+{}
+])
+
+db.getCollection('teacher').aggregate([ - группирует по полю lesson и вычисляет для произвольного поля countOfLessons сумму (количество соответствующих lesson)
+    {
+        $group:{
+            _id:'$lesson',
+            countOfLessons: {$sum:1}
+        }
+    }
+])
+db.getCollection('teacher').aggregate([
+    {
+        $group:{
+            _id:'$lesson' },              - группирует по полю lesson
+            countOfLessons: {$sum:1},   - вычисляет для произвольного поля countOfLessons количество соответствующих lesson (если задавать $sum:10 - умножит кол-во на 10)
+            min: {$min: '$payment'},    - вычисляет для произвольного поля min минимальное значение поля payment для соответствующего lesson
+            max: {$max: '$payment'},    - вычисляет для произвольного поля max максимальное значение поля payment для соответствующего lesson
+            avg: {$avg: '$payment'},    - вычисляет для произвольного поля avg среднее значение поля payment для соответствующего lesson
+            sum: {$sum: '$payment'},    - вычисляет для произвольного поля sum суммарное значение поля payment для соответствующего lesson
+
+    }
+])
+
+
+db.getCollection('teacher').aggregate([     - будет считать количество всех записей коллекции
+    {
+        $group:{
+            _id:0,
+            countOfLessons: {$sum:1}
+        }
+    }
+])
+
+db.getCollection('teacher').aggregate([  - добавляем еще сортировку по id (-1 - desc)
+    {
+        $group:{
+            _id:'$lesson',
+            countOfLessons: {$sum:1}
+        }
+    },
+   {$sort: {_id:-1}}
+])
+
+db.getCollection('teacher').aggregate([ - используем агрегатную функцию project, которая подготавливает окончательный формат вывода
+    {
+        $group:{
+            _id:'$lesson',
+            countOfLessons: {$sum:1}
+        }
+    },
+   {$sort: {_id:1}},
+    {
+        $project: {
+            lesson: '$_id'      - здесь дублирует в произвольное поле lesson, заданные значения в id
+            }
+        }
+])
+
+db.getCollection('teacher').aggregate([
+    {
+        $group:{
+            _id:'$lesson',
+            countOfLessons: {$sum:1}
+        }
+    },
+   {$sort: {_id:1}},
+    {
+        $project: {
+            lesson: '$_id',
+            _id:0,              - не выводим поле _id
+            countOfLessons:1    - добавляем вывод поля countOfLessons
+            }
+        }
+])
+
+db.getCollection('teacher').aggregate([
+    {
+        $lookup:{                       - объединение коллекций
+            from: 'students',           - c какой коллекцие объединяем
+            localField: 'class_curator', - поле в исходной коллекции (teacher) по которому будем объединять
+            foreignField: 'class',        - поле из внешней коллекции (students) по которому будем объединять
+            as: 'myStudents'              - название поля на выводе, в которое вставятся элементы из внешней коллекции при равных ключах localField и foriegnField
+        }
+     }
+])
+
+
+db.getCollection('teacher').aggregate([
+    {
+        $match: {                   - дополнительно задает ограничение для поля class_curator <= 5
+        class_curator: {$lte:5}
+        }
+    },
+    {
+        $lookup:{
+            from: 'students',
+            localField: 'class_curator',
+            foreignField: 'class',
+            as: 'myStudents'
+        }
+     }
+])
+
+
+db.getCollection('teacher').aggregate([
+    {
+        $match: {
+        class_curator: {$lte:5}
+        }
+    },
+    {
+        $lookup:{
+            from: 'students',
+            localField: 'class_curator',
+            foreignField: 'class',
+            as: 'myStudents'
+        }
+     },
+  {
+    $sort:{class_curator:1}     - добавляем еще сортировку по class_curator по asc
+  }
+])
+
+db.getCollection('teacher').aggregate([
+    {
+        $match: {
+        class_curator: {$lte:5}
+        }
+    },
+    {
+        $lookup:{
+            from: 'students',
+            localField: 'class_curator',
+            foreignField: 'class',
+            as: 'myStudents'
+        }
+     },
+  {
+    $sort:{class_curator:1}
+  },
+   {$skip: 4},          - пропускаем 4
+   {$limit: 2}          - ограничение на вывод 2
+
+])
+
+
+db.getCollection('teacher').aggregate([
+    {
+        $match: {
+        class_curator: {$lte:5}
+        }
+    },
+    {
+        $lookup:{
+            from: 'students',
+            localField: 'class_curator',
+            foreignField: 'class',
+            as: 'myStudents'
+        }
+     },
+  {
+      $match:{                                              - дополнительно задаем ограничение на вывод - есть хотя бы один родитель с профессией doctor
+          'myStudents.parents.profession': 'doctor'
+      }
+  },
+    {$sort:{class_curator:1}},
+])
+
+
+db.getCollection('teacher').aggregate([
+    {
+        $match: {
+        class_curator: {$lte:5}
+        }
+    },
+    {
+        $lookup:{
+            from: 'students',
+            localField: 'class_curator',
+            foreignField: 'class',
+            as: 'myStudents'
+        }
+     },
+  {$sort:{class_curator:1}},
+  {$unwind: '$myStudents'}      - разбивает массив на отдельные объекты (несколько раз будут встречаться одни и те же учителя с разными студентами)
+
+])
+
+
+db.getCollection('teacher').aggregate([
+    {
+        $match: {
+        class_curator: {$lte:5}
+        }
+    },
+    {
+        $lookup:{
+            from: 'students',
+            localField: 'class_curator',
+            foreignField: 'class',
+            as: 'myStudents'
+        }
+     },
+  {$sort:{class_curator:1}},
+  {$unwind: '$myStudents'},
+  {$unwind: '$myStudents.parents'}      - дополнительно разбивает еще по каждому родителю
+
+])
+
+db.getCollection('teacher').aggregate([
+    {
+        $match: {
+        class_curator: {$lte:5}
+        }
+    },
+    {
+        $lookup:{
+            from: 'students',
+            localField: 'class_curator',
+            foreignField: 'class',
+            as: 'myStudents'
+        }
+     },
+  {$sort:{class_curator:1}},
+  {$unwind: '$myStudents'},
+  {$unwind: '$myStudents.parents'},
+  {
+      $match:{
+          'myStudents.parents.profession': 'doctor'     - дополнительно ищем родителя с профессией доктор
+      }
+  }
+
+])
+
+db.getCollection('teacher').aggregate([
+    {
+        $match: {
+        class_curator: {$lte:5}
+        }
+    },
+    {
+        $lookup:{
+            from: 'students',
+            localField: 'class_curator',
+            foreignField: 'class',
+            as: 'myStudents'
+        }
+     },
+  {$sort:{class_curator:1}},
+  {$unwind: '$myStudents'},
+  {$unwind: '$myStudents.parents'},
+  {
+      $match:{
+          'myStudents.parents.profession': 'doctor'
+      }
+  },
+  {$count: 'DoctorCount'}           - считаем количество таких объектов и заносим в поле DoctorCount
+
+])
+
+Используем агрегатные функции, только при невозможности использовать find, т.к. агрегатки грузят базу
+
+mongodump - для создания dump из MongoDB (нужно устанавливать отдельно)
+
+{ "_id" : 1, "scores" : [ 1, 5, 17 ] }
+{ "_id" : 2, "scores" : [ 8, 17, 18 ] }
+{ "_id" : 3, "scores" : [ 15, 11, 8 ] }
+
+db.players.updateMany(
+   { scores: { $gte: 10 } },
+   { $set: { "scores.$[e]" : 10 } },
+   { arrayFilters: [ { "e": { $gte: 10 } } ] }  - делает дополнительный фильтр для вставки новых значений
+)
+
+Result:
+{ "_id" : 1, "scores" : [ 1, 5, 10 ] }
+{ "_id" : 2, "scores" : [ 8, 10, 10 ] }
+{ "_id" : 3, "scores" : [ 10, 10, 8 ] }
